@@ -155,6 +155,7 @@ func (c *controller) ProcessItem(ctx context.Context, key types.NamespacedName) 
 
 	toSyncXLS := ls.DeepCopy()
 	inheritAnnotations(toSyncXLS, gw)
+	setHTTP01ParentRef(toSyncXLS, gw)
 
 	return c.sync(ctx, toSyncXLS)
 }
@@ -192,6 +193,51 @@ func inheritAnnotations(xls *gwapi.ListenerSet, gw *gwapi.Gateway) {
 	}
 
 	xls.SetAnnotations(lsAnn)
+}
+
+// setHTTP01ParentRef determines the appropriate parentRef for ACME HTTP-01
+// solver HTTPRoutes created for this ListenerSet using a cascade:
+//  1. If the ListenerSet itself has an HTTP listener, use the ListenerSet.
+//  2. If not, fall back to the parent Gateway if it has an HTTP listener.
+//
+// This allows users to declare TLS exclusively on a ListenerSet while relying
+// on the Gateway's existing HTTP listener to serve ACME challenges, without
+// needing to add an HTTP listener to every ListenerSet.
+func setHTTP01ParentRef(ls *gwapi.ListenerSet, gw *gwapi.Gateway) {
+	ann := ls.GetAnnotations()
+	if ann == nil {
+		ann = map[string]string{}
+	}
+
+	if hasHTTPListenerEntry(ls.Spec.Listeners) {
+		ann[shimhelper.InternalHTTP01ParentRefKind] = "ListenerSet"
+		ann[shimhelper.InternalHTTP01ParentRefName] = ls.Name
+	} else if hasHTTPGatewayListener(gw.Spec.Listeners) {
+		ann[shimhelper.InternalHTTP01ParentRefKind] = "Gateway"
+		ann[shimhelper.InternalHTTP01ParentRefName] = gw.Name
+	}
+	// If neither has an HTTP listener, leave unset — setIssuerSpecificConfig
+	// falls back to the existing ListenerSet behavior.
+
+	ls.SetAnnotations(ann)
+}
+
+func hasHTTPListenerEntry(listeners []gwapi.ListenerEntry) bool {
+	for _, l := range listeners {
+		if l.Protocol == gwapi.HTTPProtocolType {
+			return true
+		}
+	}
+	return false
+}
+
+func hasHTTPGatewayListener(listeners []gwapi.Listener) bool {
+	for _, l := range listeners {
+		if l.Protocol == gwapi.HTTPProtocolType {
+			return true
+		}
+	}
+	return false
 }
 
 func listenerSetCertificateHandler(queue workqueue.TypedRateLimitingInterface[types.NamespacedName]) func(crt *cmapi.Certificate) {
