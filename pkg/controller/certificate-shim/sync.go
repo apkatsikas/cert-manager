@@ -60,11 +60,10 @@ const (
 	reasonUpdateCertificate         = "UpdateCertificate"
 	reasonDeleteCertificate         = "DeleteCertificate"
 
-	// InternalHTTP01ParentRefKind and InternalHTTP01ParentRefName are internal
-	// annotations set by the ListenerSet controller to communicate the appropriate
-	// HTTP-01 solver HTTPRoute parentRef to setIssuerSpecificConfig. They implement
-	// a cascade: if the ListenerSet has no HTTP listener, fall back to the parent
-	// Gateway. These are not intended for end users.
+	// InternalHTTP01ParentRefKind, InternalHTTP01ParentRefName, and
+	// InternalHTTP01ParentRefNamespace are internal annotations set by the
+	// ListenerSet controller to communicate the HTTP-01 solver parentRef target
+	// to setIssuerSpecificConfig. Not intended for end users.
 	InternalHTTP01ParentRefKind      = "cert-manager.io/internal-http01-parentref-kind"
 	InternalHTTP01ParentRefName      = "cert-manager.io/internal-http01-parentref-name"
 	InternalHTTP01ParentRefNamespace = "cert-manager.io/internal-http01-parentref-namespace"
@@ -797,9 +796,6 @@ func setIssuerSpecificConfig(crt *cmapi.Certificate, ingLike metav1.Object) {
 		if crt.Annotations == nil {
 			crt.Annotations = make(map[string]string)
 		}
-		// The ListenerSet controller may have pre-computed a Gateway fallback if
-		// the ListenerSet has no HTTP listener. Use that if present, otherwise
-		// default to the ListenerSet itself.
 		if kind, ok := ingAnnotations[InternalHTTP01ParentRefKind]; ok {
 			crt.Annotations[cmacme.ACMECertificateHTTP01ParentRefKind] = kind
 		} else {

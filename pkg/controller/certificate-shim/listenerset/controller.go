@@ -195,14 +195,6 @@ func inheritAnnotations(xls *gwapi.ListenerSet, gw *gwapi.Gateway) {
 	xls.SetAnnotations(lsAnn)
 }
 
-// setHTTP01ParentRef determines the appropriate parentRef for ACME HTTP-01
-// solver HTTPRoutes created for this ListenerSet using a cascade:
-//  1. If the ListenerSet itself has an HTTP listener, use the ListenerSet.
-//  2. If not, fall back to the parent Gateway if it has an HTTP listener.
-//
-// This allows users to declare TLS exclusively on a ListenerSet while relying
-// on the Gateway's existing HTTP listener to serve ACME challenges, without
-// needing to add an HTTP listener to every ListenerSet.
 func setHTTP01ParentRef(ls *gwapi.ListenerSet, gw *gwapi.Gateway) {
 	ann := ls.GetAnnotations()
 	if ann == nil {
@@ -217,9 +209,6 @@ func setHTTP01ParentRef(ls *gwapi.ListenerSet, gw *gwapi.Gateway) {
 		ann[shimhelper.InternalHTTP01ParentRefName] = gw.Name
 		ann[shimhelper.InternalHTTP01ParentRefNamespace] = gw.Namespace
 	}
-	// If neither has an HTTP listener, leave unset — setIssuerSpecificConfig
-	// falls back to the existing ListenerSet behavior.
-
 	ls.SetAnnotations(ann)
 }
 
