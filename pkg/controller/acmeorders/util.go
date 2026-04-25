@@ -218,6 +218,7 @@ func applyGatewayAPIAnnotationParentRefOverride(o *cmacme.Order, s *cmacme.ACMEC
 
 	parentRefName, hasParentRefName := o.Annotations[cmacme.ACMECertificateHTTP01ParentRefName]
 	parentRefKind, hasParentRefKind := o.Annotations[cmacme.ACMECertificateHTTP01ParentRefKind]
+	parentRefNamespace, hasParentRefNamespace := o.Annotations[cmacme.ACMECertificateHTTP01ParentRefNamespace]
 
 	// We are ok if both of them don't exist as we fall back to the parentRef from solver config
 	// in the issuer.
@@ -227,7 +228,7 @@ func applyGatewayAPIAnnotationParentRefOverride(o *cmacme.Order, s *cmacme.ACMEC
 
 	if hasParentRefKind && hasParentRefName {
 		nsStr := o.GetNamespace()
-		if parentRefNamespace, ok := o.Annotations[cmacme.ACMECertificateHTTP01ParentRefNamespace]; ok && parentRefNamespace != "" {
+		if hasParentRefNamespace {
 			nsStr = parentRefNamespace
 		}
 		ns := gwapi.Namespace(nsStr)
