@@ -67,6 +67,11 @@ const (
 	// ACMECertificateHTTP01ParentRefKind is an annotation to specify the parent ref kind
 	// for the HTTPRoute that would be created by using the HTTP01 solver.
 	ACMECertificateHTTP01ParentRefKind = "acme.cert-manager.io/http01-parentrefkind"
+
+	// ACMECertificateHTTP01ParentRefNamespace is an annotation to specify the namespace
+	// of the parent ref for the HTTPRoute that would be created by using the HTTP01 solver.
+	// If not specified, the Order's namespace is used.
+	ACMECertificateHTTP01ParentRefNamespace = "acme.cert-manager.io/http01-parentrefnamespace"
 )
 
 const (

@@ -215,6 +215,7 @@ func setHTTP01ParentRef(ls *gwapi.ListenerSet, gw *gwapi.Gateway) {
 	} else if hasHTTPGatewayListener(gw.Spec.Listeners) {
 		ann[shimhelper.InternalHTTP01ParentRefKind] = "Gateway"
 		ann[shimhelper.InternalHTTP01ParentRefName] = gw.Name
+		ann[shimhelper.InternalHTTP01ParentRefNamespace] = gw.Namespace
 	}
 	// If neither has an HTTP listener, leave unset — setIssuerSpecificConfig
 	// falls back to the existing ListenerSet behavior.

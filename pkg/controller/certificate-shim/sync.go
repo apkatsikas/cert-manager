@@ -65,8 +65,9 @@ const (
 	// HTTP-01 solver HTTPRoute parentRef to setIssuerSpecificConfig. They implement
 	// a cascade: if the ListenerSet has no HTTP listener, fall back to the parent
 	// Gateway. These are not intended for end users.
-	InternalHTTP01ParentRefKind = "cert-manager.io/internal-http01-parentref-kind"
-	InternalHTTP01ParentRefName = "cert-manager.io/internal-http01-parentref-name"
+	InternalHTTP01ParentRefKind      = "cert-manager.io/internal-http01-parentref-kind"
+	InternalHTTP01ParentRefName      = "cert-manager.io/internal-http01-parentref-name"
+	InternalHTTP01ParentRefNamespace = "cert-manager.io/internal-http01-parentref-namespace"
 )
 
 const applysetLabel = "applyset.kubernetes.io/part-of"
@@ -808,6 +809,9 @@ func setIssuerSpecificConfig(crt *cmapi.Certificate, ingLike metav1.Object) {
 			crt.Annotations[cmacme.ACMECertificateHTTP01ParentRefName] = name
 		} else {
 			crt.Annotations[cmacme.ACMECertificateHTTP01ParentRefName] = ingLike.GetName()
+		}
+		if ns, ok := ingAnnotations[InternalHTTP01ParentRefNamespace]; ok {
+			crt.Annotations[cmacme.ACMECertificateHTTP01ParentRefNamespace] = ns
 		}
 	}
 
