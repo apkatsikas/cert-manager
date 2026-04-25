@@ -295,17 +295,17 @@ func Test_setHTTP01ParentRef(t *testing.T) {
 	httpProtocol := gwapi.HTTPProtocolType
 
 	tests := []struct {
-		name                  string
-		listenerSetListeners  []gwapi.ListenerEntry
-		gatewayListeners      []gwapi.Listener
-		gatewayName           string
-		gatewayNamespace      string
-		listenerSetName       string
-		listenerSetNamespace  string
-		expectKind            string
-		expectName            string
-		expectNamespace       string
-		expectNoAnnotations   bool
+		name                 string
+		listenerSetListeners []gwapi.ListenerEntry
+		gatewayListeners     []gwapi.Listener
+		gatewayName          string
+		gatewayNamespace     string
+		listenerSetName      string
+		listenerSetNamespace string
+		expectKind           string
+		expectName           string
+		expectNamespace      string
+		expectNoAnnotations  bool
 	}{
 		{
 			name:                 "HTTP listener on ListenerSet — solver points to ListenerSet",
@@ -329,7 +329,7 @@ func Test_setHTTP01ParentRef(t *testing.T) {
 			listenerSetName:      "my-ls",
 			listenerSetNamespace: "app",
 			gatewayName:          "gateway",
-			gatewayNamespace:     "envoy-gateway-system",
+			gatewayNamespace:     "infra",
 			listenerSetListeners: []gwapi.ListenerEntry{
 				{Protocol: httpsProtocol},
 			},
@@ -339,7 +339,7 @@ func Test_setHTTP01ParentRef(t *testing.T) {
 			},
 			expectKind:      "Gateway",
 			expectName:      "gateway",
-			expectNamespace: "envoy-gateway-system",
+			expectNamespace: "infra",
 		},
 		{
 			name:                 "No HTTP listener on either — no annotations set, falls back to existing behavior",
@@ -359,7 +359,7 @@ func Test_setHTTP01ParentRef(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ls := &gwapi.ListenerSet{
+			listenerSet := &gwapi.ListenerSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tt.listenerSetName,
 					Namespace: tt.listenerSetNamespace,
@@ -368,7 +368,7 @@ func Test_setHTTP01ParentRef(t *testing.T) {
 					Listeners: tt.listenerSetListeners,
 				},
 			}
-			gw := &gwapi.Gateway{
+			gateway := &gwapi.Gateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tt.gatewayName,
 					Namespace: tt.gatewayNamespace,
@@ -378,22 +378,30 @@ func Test_setHTTP01ParentRef(t *testing.T) {
 				},
 			}
 
-			setHTTP01ParentRef(ls, gw)
-			ann := ls.GetAnnotations()
+			setHTTP01ParentRef(listenerSet, gateway)
+			listenerSetAnnotations := listenerSet.GetAnnotations()
 
 			if tt.expectNoAnnotations {
-				require.NotContains(t, ann, shimhelper.InternalHTTP01ParentRefKind)
-				require.NotContains(t, ann, shimhelper.InternalHTTP01ParentRefName)
-				require.NotContains(t, ann, shimhelper.InternalHTTP01ParentRefNamespace)
+				require.NotContains(t, listenerSetAnnotations,
+					shimhelper.InternalHTTP01ParentRefKind)
+				require.NotContains(t, listenerSetAnnotations,
+					shimhelper.InternalHTTP01ParentRefName)
+				require.NotContains(t, listenerSetAnnotations,
+					shimhelper.InternalHTTP01ParentRefNamespace)
 				return
 			}
 
-			require.Equal(t, tt.expectKind, ann[shimhelper.InternalHTTP01ParentRefKind])
-			require.Equal(t, tt.expectName, ann[shimhelper.InternalHTTP01ParentRefName])
+			require.Equal(t, tt.expectKind,
+				listenerSetAnnotations[shimhelper.InternalHTTP01ParentRefKind])
+			require.Equal(t, tt.expectName,
+				listenerSetAnnotations[shimhelper.InternalHTTP01ParentRefName])
+
 			if tt.expectNamespace == "" {
-				require.NotContains(t, ann, shimhelper.InternalHTTP01ParentRefNamespace)
+				require.NotContains(t, listenerSetAnnotations,
+					shimhelper.InternalHTTP01ParentRefNamespace)
 			} else {
-				require.Equal(t, tt.expectNamespace, ann[shimhelper.InternalHTTP01ParentRefNamespace])
+				require.Equal(t, tt.expectNamespace,
+					listenerSetAnnotations[shimhelper.InternalHTTP01ParentRefNamespace])
 			}
 		})
 	}
